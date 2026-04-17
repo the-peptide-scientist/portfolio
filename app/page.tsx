@@ -56,12 +56,38 @@ const peptideProfiles = [
 
 export default function Home() {
   const [scrolled, setScrolled] = useState(false);
+  const [email, setEmail] = useState("");
+  const [formStatus, setFormStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Newsletter handler
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormStatus("sending");
+    
+    try {
+      // ⚠️ REPLACE WITH YOUR FORMSPREE ENDPOINT (see instructions below)
+      const response = await fetch("https://formspree.io/f/YOUR_FORM_ID", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      
+      if (response.ok) {
+        setFormStatus("success");
+        setEmail("");
+      } else {
+        setFormStatus("error");
+      }
+    } catch (error) {
+      setFormStatus("error");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900 font-sans">
@@ -82,25 +108,39 @@ export default function Home() {
       </nav>
 
       <main className="pt-24 pb-20 max-w-6xl mx-auto px-4 sm:px-6">
-        {/* Hero */}
+        {/* Hero - WITH PROFILE IMAGE */}
         <section className="mb-20 fade-in">
-          <div className="max-w-3xl">
-            <p className="text-sm font-semibold tracking-widest uppercase text-teal-700 mb-4">Peptide Scientist & Educator</p>
-            <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-6">
-              Bridging Peptide Science, Formulation, and Education
-            </h1>
-            <p className="text-lg text-stone-600 leading-relaxed mb-8 max-w-2xl">
-              R&D Scientist specializing in peptide therapeutics, lyophilization, and analytical QC. 
-              Building an open educational resource to help researchers, students, and professionals 
-              navigate peptide science with clarity and accuracy.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <a href="#peptides" className="px-6 py-3 bg-stone-900 text-white font-medium rounded-xl hover:bg-stone-800 transition">
-                Explore Peptide Profiles
-              </a>
-              <a href="#research" className="px-6 py-3 border border-stone-300 bg-white text-stone-800 font-medium rounded-xl hover:bg-stone-50 transition">
-                View Research & Experience
-              </a>
+          <div className="flex flex-col md:flex-row items-center gap-12">
+            <div className="md:w-2/3">
+              <p className="text-sm font-semibold tracking-widest uppercase text-teal-700 mb-4">Peptide Scientist & Educator</p>
+              <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-6">
+                Bridging Peptide Science, Formulation, and Education
+              </h1>
+              <p className="text-lg text-stone-600 leading-relaxed mb-8 max-w-2xl">
+                R&D Scientist specializing in peptide therapeutics, lyophilization, and analytical QC. 
+                Building an open educational resource to help researchers, students, and professionals 
+                navigate peptide science with clarity and accuracy.
+              </p>
+              <div className="flex flex-wrap gap-4">
+                <a href="#peptides" className="px-6 py-3 bg-stone-900 text-white font-medium rounded-xl hover:bg-stone-800 transition">
+                  Explore Peptide Profiles
+                </a>
+                <a href="#research" className="px-6 py-3 border border-stone-300 bg-white text-stone-800 font-medium rounded-xl hover:bg-stone-50 transition">
+                  View Research & Experience
+                </a>
+              </div>
+            </div>
+            
+            {/* Profile Image */}
+            <div className="md:w-1/3 flex justify-center">
+              <div className="relative">
+                <div className="absolute inset-0 bg-teal-600 rounded-3xl rotate-6 opacity-20"></div>
+                <img
+                  src="/profile.jpg"
+                  alt="Abdulhakim Tofik"
+                  className="relative w-64 h-64 md:w-80 md:h-80 object-cover rounded-3xl shadow-xl border-4 border-white"
+                />
+              </div>
             </div>
           </div>
         </section>
@@ -188,7 +228,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* PEPTIDE LIBRARY (Traffic & Educational Focus) */}
+        {/* PEPTIDE LIBRARY */}
         <section id="peptides" className="mb-20">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-8 gap-4">
             <div>
@@ -198,7 +238,6 @@ export default function Home() {
                 Profiles are regularly updated with peer-reviewed references.
               </p>
             </div>
-            {/* Placeholder for future search/filter */}
             <div className="flex gap-2">
               <input type="text" placeholder="Search peptides..." className="px-4 py-2 border border-stone-300 rounded-lg text-sm bg-white focus:outline-none focus:border-teal-500" disabled />
               <button className="px-4 py-2 bg-teal-700 text-white text-sm rounded-lg hover:bg-teal-800 transition" disabled>Search</button>
@@ -251,7 +290,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Newsletter / Traffic Capture */}
+        {/* Newsletter - NOW WORKING! */}
         <section className="rounded-3xl bg-stone-900 p-8 md:p-12 text-white shadow-lg mb-20">
           <div className="max-w-2xl">
             <h2 className="text-3xl font-bold mb-4">Stay Updated on New Research & Tools</h2>
@@ -259,10 +298,32 @@ export default function Home() {
               Get notified when new peptide profiles, interactive modules, and lab workflow guides are published. 
               No spam, just science.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <input type="email" placeholder="Enter your email" className="flex-1 px-4 py-3 rounded-xl bg-stone-800 border border-stone-700 text-white placeholder-stone-400 focus:outline-none focus:border-teal-500" disabled />
-              <button className="px-6 py-3 bg-teal-600 font-medium rounded-xl hover:bg-teal-700 transition" disabled>Join Newsletter</button>
-            </div>
+            
+            <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-3">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                required
+                className="flex-1 px-4 py-3 rounded-xl bg-stone-800 border border-stone-700 text-white placeholder-stone-400 focus:outline-none focus:border-teal-500"
+              />
+              <button
+                type="submit"
+                disabled={formStatus === "sending"}
+                className="px-6 py-3 bg-teal-600 font-medium rounded-xl hover:bg-teal-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {formStatus === "sending" ? "Sending..." : "Join Newsletter"}
+              </button>
+            </form>
+            
+            {formStatus === "success" && (
+              <p className="mt-3 text-green-400 text-sm">✓ Thanks for subscribing! Check your email soon.</p>
+            )}
+            {formStatus === "error" && (
+              <p className="mt-3 text-red-400 text-sm">✗ Something went wrong. Please try again.</p>
+            )}
+            
             <p className="text-xs text-stone-500 mt-3">Built for researchers, students, and peptide science enthusiasts.</p>
           </div>
         </section>
